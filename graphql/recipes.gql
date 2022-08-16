@@ -15,6 +15,13 @@ query($slug:String!){
             }
           }
         }
+        autor{
+          data{
+            attributes{
+              username
+            }
+          }
+        }
       }
     }
   }

@@ -1,0 +1,43 @@
+mutation(
+  $id:ID!
+  $name:String!
+  $duration:Int!
+  $servings:Int!
+  $img:String!
+  $description:String!
+  $ingredients:JSON!
+  $steps:JSON!
+  $categoria:ID!
+  $autor:ID!
+){
+  updateRecipe(
+    id:$id
+    data:{
+      name:$name
+      duration:$duration
+      servings:$servings
+      img:$img
+      description:$description
+      ingredients:$ingredients
+      steps:$steps
+      categoria:$categoria
+      autor:$autor
+    }
+  )
+  {
+    data{
+      id
+      attributes{
+        name
+        categoria{
+          data{
+            id
+            attributes{
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}

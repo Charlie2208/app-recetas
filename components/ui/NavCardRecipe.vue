@@ -7,7 +7,8 @@
         <v-card-text>
             <v-row>
                 <v-col cols="7">
-                    {{recipe.name}}
+                    <h3>{{recipe.name}}</h3>
+                    {{recipe.autor}}
                 </v-col>
                 <v-col cols="5" class="d-flex justify-end">
                     <div>

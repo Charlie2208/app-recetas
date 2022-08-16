@@ -1,5 +1,7 @@
 <template>
   <v-container>
+      {{userFavorites}}
+      {{recipeIsLiked}}
     <h1 class="secundary--text">{{recipe.name}}</h1>
     <h5 class="secundary--text">{{recipe.categoria.name}}</h5>
 
@@ -21,7 +23,7 @@
             </v-chip>
             <v-chip color="primary" outlined>
               <v-icon left>mdi-account-edit</v-icon>
-              Autor : autor
+              Autor : {{recipe.autor}}
             </v-chip>
 
             <v-divider class="my-3"></v-divider>
@@ -35,6 +37,12 @@
          
         </v-row>
       </v-card-text>
+      <v-card-actions>
+          <v-btn icon v-if="$auth.loggedIn" large @click="toggleLiked()">
+            <v-icon :color="recipeIsLiked?'error' : 'grey'" large>mdi-heart</v-icon>
+          </v-btn>
+          <v-icon v-else class="mr-3">mdi-heart</v-icon><span class="overline">Likes {{recipe.likes}}</span>
+      </v-card-actions>
     </v-card>
 
     <div class="mt-3">
@@ -74,14 +82,99 @@
 
 <script>
 export default {
-
+    data(){
+    return{
+      likedRecipe:false
+    }
+  },
     computed:{
       formatedTime(){
         let hours = Math.floor(this.recipe.duration / 60)
         let minutes = this.recipe.duration % 60
         let total = ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2)
         return total
+      },
+      userFavorites(){
+      return this.$store.getters['user/favorites']
+    },
+    recipeIsLiked(){
+      let liked = false
+      if(this.userFavorites){
+        const id = this.recipe.id
+        liked = this.userFavorites.some((fav) => fav.id == id)
       }
+      this.likedRecipe = liked
+      return liked
+    }
+    },
+    methods:{
+      toggleLiked(){
+      this.likedRecipe = !this.likedRecipe
+      if(this.likedRecipe){
+        this.likeRecipe()
+      }else{
+        this.unlikeRecipe()
+      }
+    },
+    likeRecipe(){
+      this.$store.commit("user/addRecipe", this.recipe)
+      let userFav = this.$store.getters['user/favoritesGQL']
+      const variables = {
+        id:this.recipe.id,
+        idUser:this.$auth.user.id,
+        favorites:userFav
+      }
+ 
+      this.$apollo.query({
+        query:require("../../../graphql/getLikes.gql"),
+        variables:{id:this.recipe.id}
+      }).then(res =>{
+ 
+        let likes = res.data.recipe.data.attributes.likes + 1
+        this.recipe.likes = likes
+        variables.likes = likes
+        this.$apollo.mutate({
+          context:{
+            headers:{
+              authorization:this.$auth.strategy.token.get()
+            }
+          },
+          mutation:require("../../../graphql/updateLikes.gql"),
+          variables:variables
+        })
+ 
+      })
+ 
+    },
+    unlikeRecipe(){
+      this.$store.commit("user/removeRecipe", this.recipe.id)
+ 
+      let userFav = this.$store.getters['user/favoritesGQL']
+      const variables = {
+        id:this.recipe.id,
+        idUser:this.$auth.user.id,
+        favorites:userFav
+      }
+ 
+      this.$apollo.query({
+        query:require("../../../graphql/getLikes.gql"),
+        variables:{id:this.recipe.id}
+      }).then(res =>{
+        let likes = res.data.recipe.data.attributes.likes - 1
+        this.recipe.likes = likes
+        variables.likes = likes
+        this.$apollo.mutate({
+          context:{
+            headers:{
+              authorization:this.$auth.strategy.token.get()
+            }
+          },
+          mutation:require("../../../graphql/updateLikes.gql"),
+          variables:variables
+        })
+ 
+      })
+    }
     },
     async asyncData({ app, route }) {
     const client = app.apolloProvider.defaultClient;
@@ -112,12 +205,20 @@ export default {
           ingredients:attributes.ingredients,
           steps:attributes.steps,
           likes:attributes.likes,
-          categoria:{id:attributes.categoria.data.id, ...attributes.categoria.data.attributes}
+          categoria:{id:attributes.categoria.data.id, ...attributes.categoria.data.attributes},
+          //add autor to recipe
+          autor:attributes.autor.data.attributes.username
         }
       })
       .catch((e) => console.log(e));
  
     return { recipe };
+  },
+  async mounted(){
+    if(this.$auth.logedIn && this.$store.getters['user/favorites'] == null){
+      console.log('call favorites')
+      await this.dispatch("user/getFavorites")
+    }
   }
 }
 </script>

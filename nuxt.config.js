@@ -71,12 +71,12 @@ export default {
     }
   },
   axios:{
-    baseURL:'http://localhost:1337/'
+    baseURL:'http://https://carlos-recetas.herokuapp.com/'
   },
   apollo: {
     clientConfigs: {
       default: {
-        httpEndpoint: 'http://localhost:1337/graphql',
+        httpEndpoint: 'http://https://carlos-recetas.herokuapp.com/graphql',
       }
     }
   },

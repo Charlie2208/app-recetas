@@ -57,7 +57,9 @@ export default {
           //en la propiedad category conservo un objeto
           //pero filtro las propiedades data y attributos para facil uso
           categoria:{id:element.attributes.categoria.data.id, 
-          ...element.attributes.categoria.data.attributes}
+          ...element.attributes.categoria.data.attributes},
+          //autor
+          autor:element.attributes.autor.data.attributes.username
         }
         //recuerda analizar los datos que recibes en la respuesta
         recipes.push(recipe)
